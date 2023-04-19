@@ -22,16 +22,27 @@ def detect(frame,p,temp):
     pick = non_max_suppression(bounding_box_cordinates,probs = None,overlapThresh=0.65)
     person = p
     temp_postion = temp
-    for x,y,w,h in pick:
-        cv2.rectangle(frame,(x,y),(w,h),(0,255,0),2)
-        cv2.putText(frame,f'person{person}',(x,y),fontOne,0.5,(0,0,255),1)
-        if ((x,y,w,h) in temp_postion):
-            # temp_postion.pop()
+    for i,(x,y,w,h) in pick:
+        
+        if weights[i] < 0.13:
             continue
-        else:
-            person +=1
-            temp_postion.append((x,y,w,h))    
-        cv2.putText(frame,'Status:Detection',(40,40),fontOne,0.8,(255,0,0),2)
+        elif weights[i] < 0.3 and weights[i] > 0.13:
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
+        if weights[i] < 0.7 and weights[i] > 0.3:
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (50, 122, 255), 2)
+        if weights[i] > 0.7:
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            if ((x,y,w,h) in temp_postion):
+                 # temp_postion.pop()
+                 continue
+            else:
+                person +=1
+                temp_postion.append((x,y,w,h))
+         
+        cv2.putTex(frame,"HIGH Confidence",(10, 15),fontOne,0.8,(0, 255, 0),1)
+        cv2.putTex(frame,"Moderate confidences",(10, 15),fontOne,0.8,(50, 122, 255),1)
+        cv2.putTex(frame,"Low Confidence",(10, 15),fontOne,0.8,(0, 0, 255),1)
+        # cv2.putText(frame,'Status:Detection',(40,40),fontOne,0.8,(255,0,0),2)
     cv2.putText(frame,f'Total Persons: {person}',(40,70),fontOne,0.8,(255,0,0),2)
     cv2.imshow('output',frame)
     return frame,person,temp_postion
