@@ -1,3 +1,4 @@
+from glob import glob
 import cv2 , imutils
 import numpy as np
 from imutils.object_detection import non_max_suppression
@@ -7,22 +8,33 @@ HOGCV = cv2.HOGDescriptor()
 HOGCV.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
 # DETECT
+global person 
+# Valores para scale 
+# 0.25 - cerca
+#0.5 -media
+#1- noram 1 a 1
 
-def detect(frame):
+def detect(frame,p,temp):
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     fontOne = cv2.FONT_HERSHEY_SIMPLEX
-    bounding_box_cordinates,weights = HOGCV.detectMultiScale(frame,winStride = (4,4),padding = (8,8),scale = 1.03)
+    bounding_box_cordinates,weights = HOGCV.detectMultiScale(frame_gray,winStride = (4,4),padding = (8,8),scale = 0.50)
     bounding_box_cordinates = np.array([[x,y,x+w,y+h] for (x,y,w,h) in bounding_box_cordinates])
     pick = non_max_suppression(bounding_box_cordinates,probs = None,overlapThresh=0.65)
-    person = 1
+    person = p
+    temp_postion = temp
     for x,y,w,h in pick:
         cv2.rectangle(frame,(x,y),(w,h),(0,255,0),2)
         cv2.putText(frame,f'person{person}',(x,y),fontOne,0.5,(0,0,255),1)
-        person +=1
-        
+        if ((x,y,w,h) in temp_postion):
+            # temp_postion.pop()
+            continue
+        else:
+            person +=1
+            temp_postion.append((x,y,w,h))    
         cv2.putText(frame,'Status:Detection',(40,40),fontOne,0.8,(255,0,0),2)
     cv2.putText(frame,f'Total Persons: {person}',(40,70),fontOne,0.8,(255,0,0),2)
     cv2.imshow('output',frame)
-    return frame
+    return frame,person,temp_postion
 
 
 def detectByCamera(writer):   
@@ -71,9 +83,11 @@ def detectByPathImage(path, output_path):
 def detectByCamera(writer):   
     video = cv2.VideoCapture(0)
     print('Detecting people...')
+    person = 0 
+    temp = []
     while True:
         check, frame = video.read()
-        frame = detect(frame)
+        frame,person,temp = detect(frame,person,temp)
         if writer is not None:
             writer.write(frame)
         key = cv2.waitKey(1)
