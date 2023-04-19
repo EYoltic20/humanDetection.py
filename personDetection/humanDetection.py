@@ -22,7 +22,7 @@ def detect(frame,p,temp):
     pick = non_max_suppression(bounding_box_cordinates,probs = None,overlapThresh=0.65)
     person = p
     temp_postion = temp
-    for i,(x,y,w,h) in pick:
+    for i,(x,y,w,h) in enumerate(pick):
         
         if weights[i] < 0.13:
             continue
@@ -39,11 +39,11 @@ def detect(frame,p,temp):
                 person +=1
                 temp_postion.append((x,y,w,h))
          
-        cv2.putTex(frame,"HIGH Confidence",(10, 15),fontOne,0.8,(0, 255, 0),1)
-        cv2.putTex(frame,"Moderate confidences",(10, 15),fontOne,0.8,(50, 122, 255),1)
-        cv2.putTex(frame,"Low Confidence",(10, 15),fontOne,0.8,(0, 0, 255),1)
+    cv2.putText(frame,"HIGH Confidence",(10, 25),fontOne,0.8,(0, 255, 0),2)
+    cv2.putText(frame,"Moderate confidences",(10, 55),fontOne,0.8,(50, 122, 255),2)
+    cv2.putText(frame,"Low Confidence",(10, 85),fontOne,0.8,(0, 0, 255),2)
         # cv2.putText(frame,'Status:Detection',(40,40),fontOne,0.8,(255,0,0),2)
-    cv2.putText(frame,f'Total Persons: {person}',(40,70),fontOne,0.8,(255,0,0),2)
+    cv2.putText(frame,f'Total Persons: {person}',(10,105),fontOne,0.8,(255,0,0),2)
     cv2.imshow('output',frame)
     return frame,person,temp_postion
 
