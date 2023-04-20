@@ -14,30 +14,35 @@ global person
 #0.5 -media
 #1- noram 1 a 1
 
-def detect(frame,p,temp):
-    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+def detect(frame):
+    
     fontOne = cv2.FONT_HERSHEY_SIMPLEX
-    bounding_box_cordinates,weights = HOGCV.detectMultiScale(frame_gray,winStride = (4,4),padding = (8,8),scale = 0.50)
+    frame = imutils.resize(frame,width=min(400, frame.shape[1]))
+    
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    bounding_box_cordinates,weights = HOGCV.detectMultiScale(frame_gray,winStride = (4,4),padding = (4,4),scale = 1.02)
     bounding_box_cordinates = np.array([[x,y,x+w,y+h] for (x,y,w,h) in bounding_box_cordinates])
-    pick = non_max_suppression(bounding_box_cordinates,probs = None,overlapThresh=0.65)
-    person = p
-    temp_postion = temp
-    for i,(x,y,w,h) in enumerate(pick):
+    # pick = non_max_suppression(bounding_box_cordinates,probs = None,overlapThresh=0.65)
+    person = 0
+    # temp_postion = temp
+    for i,(x,y,w,h) in enumerate(bounding_box_cordinates):
         
         if weights[i] < 0.13:
-            continue
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 255), 2)
         elif weights[i] < 0.3 and weights[i] > 0.13:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
         if weights[i] < 0.7 and weights[i] > 0.3:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (50, 122, 255), 2)
+            person +=1
         if weights[i] > 0.7:
+            person +=1
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            if ((x,y,w,h) in temp_postion):
-                 # temp_postion.pop()
-                 continue
-            else:
-                person +=1
-                temp_postion.append((x,y,w,h))
+            # if ((x,y,w,h) in temp_postion):
+            #      # temp_postion.pop()
+            #      continue
+            # else:
+            
+                # temp_postion.append((x,y,w,h))
          
     cv2.putText(frame,"HIGH Confidence",(10, 25),fontOne,0.8,(0, 255, 0),2)
     cv2.putText(frame,"Moderate confidences",(10, 55),fontOne,0.8,(50, 122, 255),2)
@@ -45,7 +50,7 @@ def detect(frame,p,temp):
         # cv2.putText(frame,'Status:Detection',(40,40),fontOne,0.8,(255,0,0),2)
     cv2.putText(frame,f'Total Persons: {person}',(10,105),fontOne,0.8,(255,0,0),2)
     cv2.imshow('output',frame)
-    return frame,person,temp_postion
+    return frame
 
 
 def detectByCamera(writer):   
@@ -84,7 +89,7 @@ def humanDetector(args):
         
 def detectByPathImage(path, output_path):
     image = cv2.imread(path)
-    image = imutils.resize(image, width = min(800, image.shape[1])) 
+    image = imutils.resize(image, width = min(1000, image.shape[1])) 
     result_image = detect(image)
     if output_path is not None:
         cv2.imwrite('/Users/emilioymartinez/Desktop/6_toSemestre/personDetection', result_image)
@@ -94,11 +99,11 @@ def detectByPathImage(path, output_path):
 def detectByCamera(writer):   
     video = cv2.VideoCapture(0)
     print('Detecting people...')
-    person = 0 
-    temp = []
+    
+    
     while True:
         check, frame = video.read()
-        frame,person,temp = detect(frame,person,temp)
+        frame = detect(frame)
         if writer is not None:
             writer.write(frame)
         key = cv2.waitKey(1)
