@@ -19,13 +19,9 @@ def detect(frame):
     
     fontOne = cv2.FONT_HERSHEY_SIMPLEX
     frame = imutils.resize(frame,width=min(400, frame.shape[1]))
-    # if frame.shape[1] < 400: # if image width < 400
-    #     (height, width) = image.shape[:2]
-    #     ratio = width / float(width) # find the width to height ratio
-    #     image = cv2.resize(frame, (400, width*ratio))
-    
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     bounding_box_cordinates,weights = HOGCV.detectMultiScale(frame_gray,winStride = (4,4),padding = (8,8),scale = 1.02)
+
     # bounding_box_cordinates = np.array([[x,y,x+w,y+h] for (x,y,w,h) in bounding_box_cordinates])
     pick = non_max_suppression(bounding_box_cordinates,probs = None,overlapThresh=0.5)
     person = 0
@@ -58,7 +54,7 @@ def detect(frame):
         # cv2.putText(frame,'Status:Detection',(40,40),fontOne,0.8,(255,0,0),2)
     cv2.putText(frame,f'Total Persons: {person}',(10,105),fontOne,0.8,(255,0,0),2)
     cv2.imshow('output',frame)
-    return frame
+    return frame,bounding_box_cordinates
 
     
 def humanDetector(args):
@@ -96,11 +92,13 @@ def detectByCamera(writer):
     print('Detecting people...')
     cTime = 0 
     pTime = 0
+    persons = 0
+
     while True:
         cTime = time.time()
         fps = 1/(cTime - pTime)
         check, frame = video.read()
-        frame = detect(frame)
+        frame,deteced = detect(frame)
         if writer is not None:
             writer.write(frame)
         key = cv2.waitKey(1)
@@ -112,10 +110,8 @@ def detectByCamera(writer):
     
 def argsParser():
     arg_parse = argparse.ArgumentParser()
-    arg_parse.add_argument("-v", "--video", default=None, help="path to Video File ")
     arg_parse.add_argument("-i", "--image", default=None, help="path to Image File ")
     arg_parse.add_argument("-c", "--camera", default=False, help="Set true if you want to use the camera.")
-    arg_parse.add_argument("-o", "--output", type=str, help="path to optional output video file")
     args = vars(arg_parse.parse_args())
 
     return args  
